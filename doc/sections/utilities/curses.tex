@@ -1,0 +1,17 @@
+% !TeX root ../../tgame_doc
+% !TeX spellcheck = en_GB
+
+Utilities in the \code{util.curses} sub-module are mainly meant to provide enhancements or introduce conventions inside the \code{curses} package.
+
+\paragraph{screen functions} the main issue addressed by the following functions is the bottom left corner odd behaviour. In future versions these functions might be removed, overloading the respective \code{curses} method
+
+\medskip
+\func{screen\_subwin}{screen, y, x, h, w}{
+	Return a sub screen object with top right corner in (\textit{x}, \textit{y}) of width \textit{w} and height \textit{h}.
+	\remark{when creating a sub view this function should \textbf{always} be used instead of the \code{subwin} method.}
+}
+
+\func{screen\_size}{screen}{
+	return \textit{h}, \textit{w} that are respectively the height and the width of the given screen.
+	\remark{in order to get the size of a screen this function should \textbf{always} be used instead of the \code{getmaxyx} method.}
+}

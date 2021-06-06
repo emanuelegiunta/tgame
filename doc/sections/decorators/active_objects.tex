@@ -1,0 +1,40 @@
+% !TeX root ../../tgame_doc
+% !TeX spellcheck = en_GB
+
+\paragraph{Methods and variables}
+The decorator \code{@active\_objects} is the most essential. Its main goal is to equip the given class with basic methods that allows the instances to interact with the context \EG{ref} and perform basic actions such as activate, deactivate and destroy themselves. 
+Crucially, the \code{context} object assumes that all the instances he receives are at least decorated as active objects, for instance by checking if they are inactive before executing an event.\\
+Below a list of methods and variables added/modified by the decorator
+
+\medskip
+\vari{.active}{Read Only}{
+	Boolean values modified by the methods \code{activate} and \code{deactivate}. If \code{True} for a given instance in the current room, the context will call its event methods in the main loop.
+}
+
+\vari{.\_c}{Private, Read Only}{
+	Context object \EG{ref?}.
+}
+
+\vari{.\_s}{Private, Read Only}{
+	Associated screen object.
+}
+
+
+\func{\_\_init\_\_}{context, *argv, screen \keyword{None}, **kwarg}{
+	Attach the given instance to \textit{context} and bind the screen. If the decorated class implements \code{\_\_init\_\_} this is executed with \textit{argv, kwarg}; otherwise these values are passed to \code{ev\_create} if implemented. If both \code{\_\_init\_\_} and \code{ev\_create} are defined, only the first method is invoked and a \code{RuntimeWarning} is raised.\\
+	\remark{observe that the new \code{\_\_init\_\_} has two extra argument with respect to the previous one/the creation event.}
+}
+
+\func{activate}{ }{
+	Set \code{active} to \code{True}.
+}
+
+\func{deactivate}{ }{
+	Set \code{active} to \code{False}.
+}
+
+\func{destroy}{  }{
+	Destroy the object and perform the \code{ev\_destroy} event.
+}
+
+\paragraph{Examples} \EG{TODO}

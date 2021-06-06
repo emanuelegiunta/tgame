@@ -1,0 +1,37 @@
+% !TeX root ../../tgame_doc
+% !TeX spellcheck = en_GB
+
+\paragraph{Methods}
+Background object are the first one to be drawn on screen after a reset, usually before the draw event is performed. 
+This is the reason why printing anything on screen before the draw event will not produce any effects.
+Backgrounds are currently meant to be mainly loaded once and forgotten, however basic manipulation through getters and setters is provided
+
+\medskip
+\func{background}{context, bkg \keyword{None}}{
+	Create a background object using information on \textit{bkg}. 
+	If \textit{bkg} is \code{None} the background is set to empty. 
+	If \textit{bkg} is a string the constructor interpret it as a path and try to load a \code{.bkg} file - which should be of the same size of the current main screen.
+	If \textit{bkg} behave as a dictionary, the constructor extract the background from it.
+}
+
+\func{ch\_set}{y, x, c, a \keyword{curses.A\_NORMAL}}{
+	Set the character in position (\textit{x}, \textit{y}) to be \textit{c} with attribute \textit{a}.
+	If the position is not in the screen an error is raised \EG{which one?}
+}
+
+\func{ch\_get}{y, x}{
+	Get the character in position (\textit{x}, \textit{y}) and returns a tuple (\textit{c}, \textit{a}) containing the character in the given position and the attribute.
+	If the position is not inside the screen an error is raised.
+}
+
+\func{ch\_del}{y, x}{
+	Remove the character in position (\textit{x}, \textit{y}).
+	If the position is not inside the screen an error is raised.
+	\remark{running \code{ch\_del(y, x)} should be preferred over the semantically equivalent \code{ch\_set(y, x, " ")}.}
+}
+
+\func{draw}{ }{
+	Draw the background on screen
+}
+
+\paragraph{File format} \EG{Todo}

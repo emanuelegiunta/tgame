@@ -1,0 +1,107 @@
+% !TeX root ../../tgame_doc
+% !TeX spellcheck = en_GB
+
+\paragraph{Room methods}
+The two main actions provided to manipulate rooms handled by the context object are creation and transition. 
+Creating a room is meant to happen before the main loop, even though the action can be called at any time, while transitions are supposed to happen frequently.
+Creation is handled with the two following methods
+
+\medskip
+\func{room\_create}{name, *argv}{
+	Create a new room and add it to the list with the arguments passed. \EG{ref to rooms} If name is already used returns an error
+}
+
+\func{room\_add}{name, room}{
+	Given a room object, it is inserted in the data structure of active rooms with key equal to the given name. If there is another room with the same name an error is returned.
+}
+
+On the other side, to perform transitions between rooms the following methods are provided. Observe that they all cause an \code{ev\_room\_end} event in the current room and an \code{ev\_room\_start} event in the arriving room.
+
+\medskip
+\func{room\_goto}{name}{
+	Goes to the room of given name, raising an error if this room does not exists.
+}
+
+\func{room\_precedent}{ }{
+	Goes to the last visited room before the current one. If this is the first room visited in the game it raises an error.
+}
+
+\func{room\_next}{ }{
+	Goes to the next room according to the creation order. If the current room is the last it will raise an error.
+}
+	
+\func{room\_previous}{ }{
+	Goes to the previous room according to the creation order. If the current room is the first it will raise an error.
+}
+
+\func{room\_first}{ }{
+	Goes to the first room according to the creation order. If no room was created so far it will raise an error.
+}
+
+\func{room\_last}{ }{
+	Goes to the last room according to the creation order. If no room was created so far it will raise an error.
+}
+
+\paragraph{Instance methods}
+Instance related method allows to manage active objects, adding/removing them and looping through them. The first category is only recommended for internal and low-level use.
+
+\medskip
+\func{instance\_add}{inst}{ 
+	Add \textit{inst} to the list of active objects. \remark{when creating a new object from a given class this is usually done by parent methods.}
+}
+
+\func{instance\_remove}{inst}{
+	Remove \textit{inst} from the list of active objects. \remark{when destroying an object created from a given class, this action is usually performed by some parent method.}
+}
+
+\func{instance\_of}{*filters}{
+	Given a tuple of criteria \textit{filters}, return all instances satisfying at least one of them. Criteria can either be strings, interpreted as ``instance whose class name match the given string'' or boolean functions. \remark{notice that boolean functions are executed on all active instances. So looking for an instance with \code{inst.x = 1} will throw an error if there exists instances without this attribute}
+}
+
+\func{instance\_all}{*but}{
+	Given a tuple of criteria \textit{*but} it returns all active instances that don't satisfy any of them. Criteria can either be strings, interpreted as ``instance whose class name match the given string'' or boolean functions. \remark{notice that boolean functions are executed on all active instances. So looking for an instance with \code{inst.x = 1} will throw an error if there exists instances without this attribute}.
+}
+
+\paragraph{View methods}
+The following methods allows to handle views, that are instances of \code{curses.screen}. 
+Views in the current room are refreshed and displayed at each step \EG{exceptions?}.
+The main context in which this methods are useful is during room creation and in the main loop to clear/refresh the screen.
+
+\medskip
+\func{view\_add}{view}{
+	Add a \code{curses.screen} object to the current room.
+}
+
+\func{view\_clear}{ }{
+	Clear all views in the current room. This is a hard reset and invoking it often may cause flickering
+}
+
+\func{view\_erase}{ }{
+	Clear all views in the current room. This is a soft reset as to display any change it is necessary to call \code{view\_refresh}
+}
+
+\func{view\_refresh}{ }{
+	Refresh all views in the current room.
+}
+
+\paragraph{Background methods}
+For background, as currently there is only one of them per room, it directly accessible through the variable \code{.background}. Hence the only method needed is the one that creates a new background.
+
+\medskip
+\func{background\_create}{*argv, **kwarg}{
+	Create a background object and set it as the active one on the current room. Arguments \textit{*argv}, \textit{**kwarg} are the same used in the constructor methods of a background object.
+}
+
+
+
+\paragraph{Event methods}
+To avoid repetitions there is only one generic method dealing with events, meant to be used in the main loop
+
+\medskip
+\func{ev\_perform}{name,*argv,**kwarg}{
+	Run for all active instances in the current room the event \textit{name}, that is a string, passing if required supplementary arguments.
+}
+
+For instance to perform the \code{ev\_step} event for all currently active instances the right command would be \code{ev\_perform("ev\_step")}.
+
+

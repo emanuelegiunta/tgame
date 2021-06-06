@@ -1,0 +1,33 @@
+% !TeX root tgame_doc
+% !TeX spellcheck = en_GB
+
+% - - - Text Formatting - - - %
+\newcommand{\EG}[1]{
+	\ifComments%
+		\textcolor{blue}{(\textbf{EG: #1})}%
+	\fi%
+	}
+
+\newcommand*{\code}[1]{\texttt{#1}}
+
+\newcommand{\func}[3]{
+	\noindent
+	\texttt{#1} (\textit{#2}):%
+	\begin{adjustwidth}{0.75cm}{0cm}
+		\small #3
+	\end{adjustwidth}
+	\medskip
+	}
+	
+\newcommand{\vari}[3]{
+	\noindent
+	\texttt{#1}\hfill#2
+	\begin{adjustwidth}{0.75cm}{0cm}
+		\small #3
+	\end{adjustwidth}
+	\medskip
+	}
+
+\newcommand{\remark}[1]{\textbf{Remark}:\ #1}
+
+\newcommand{\keyword}[1]{= \textnormal{\code{#1}}}
