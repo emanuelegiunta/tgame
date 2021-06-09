@@ -1,8 +1,9 @@
 import curses
 
-from utilities import screen_size, extension_set
+from utilities import screen_size, extension_set, chratt
 from constants import BACKGROUND_EXT
 
+# helper function
 def _background_from_file(filename, height, width):
 	filename = extension_set(filename, BACKGROUND_EXT)
 
@@ -30,6 +31,24 @@ def _background_from_file(filename, height, width):
 
 	return out
 
+# public function
+def background_screenshot(context):
+	s = context.screen
+	h, w = screen_size(s)
+	bkg = {}
+
+	# fill the bkg dictionary with screen characters
+	for y in range(h):
+		for x in range(w):
+			c, a = chratt(s.inch(y, x))
+
+			if c != " ":
+				bkg[y, x] = (c, a)
+
+	# return a background
+	return background(context, bkg = bkg)
+
+# main class
 class background(object):
 	def __init__(self, context, bkg = None):
 		# bkg can be formatted in several ways:
@@ -58,6 +77,20 @@ class background(object):
 		assert (y >= 0) and (self._h > y), "y coordinate out of boundaries"
 		assert (x >= 0) and (self._w > x), "x coordinate out of boundaries"
 		self._bkg[y, x] = (c, curses.A_NORMAL)
+
+	def eff_add(self, a):
+		'''Change the attribute of all character
+
+		Note:
+		Unexpected behaviour! Only the character in the dictionary are changed.
+		This means that loading a background from file and then changing the
+		attribute (eg. A_REVERSE) only reverse the non-space character of the
+		background
+		'''
+
+		for key, (bkg_c, bkg_a) in self._bkg.iteritems():
+			self._bkg[key] = (bkg_c, bkg_a | a)
+
 
 	def ch_get(self, y, x):
 		assert (y >= 0) and (self._h > y), "y coordinate out of boundaries"

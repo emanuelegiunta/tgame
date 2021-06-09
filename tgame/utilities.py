@@ -1,5 +1,6 @@
 import curses
 
+
 # screen functions
 def screen_size(screen):
 	''' Return the size of the screen
@@ -37,7 +38,23 @@ def screen_subwin(screen, y, x, h, w):
 	address with minimal discomfort the bottom right issue, i.e. using
 	screen.addch(h, w, *argv) will cause an error.
 	'''
-	return screen.subwin(h + 1, w, y, x)
+
+	# for easier debug check if the screen fit
+
+	try:	
+		return screen.subwin(h + 1, w, y, x)
+	except:
+		# guess what the cause of the error was
+		screen_h, screen_w = screen_size(screen)
+		if not x + w <= screen_w:
+			raise ValueError, "New view's width exceed parent view's width"
+		elif not y + h <= screen_h:
+			raise ValueError, "New view's heigth exceed parent view's heigth"
+
+		# if the guessing is not right, give up
+		else:
+			raise
+
 
 # file functions
 def extension_get(filename):
@@ -81,8 +98,9 @@ def extension_set(filename, extension):
 		# return the result
 		return filename[:i] + '.' + extension
 
+
 # draw functions
-def draw_canvas(screen, x, y, n, m, char = ' ', att = curses.A_REVERSE):
+def draw_canvas(screen, x, y, w, h, **kwarg):
 	''' Draw a canvas on a given screen
 
 	Input:
@@ -97,14 +115,33 @@ def draw_canvas(screen, x, y, n, m, char = ' ', att = curses.A_REVERSE):
 	Setting [n] or [m] smaller than 2 raises an error
 	'''
 
+	c = kwarg.pop('c', kwarg.pop('character', ' '))
+	a = kwarg.pop('a', kwarg.pop('attribute', curses.A_NORMAL))
+
 	# draw upper and lower border
-	screen.addstr(y, x, char*n, att)
-	screen.addstr(y + m - 1, x, char*n, att)
+	screen.addstr(y, x, c*w, a)
+	screen.addstr(y + h - 1, x, c*w, a)
 
 	# draw the columns
-	for i in range(1, m - 1):
-		screen.addch(y + i, x, char, att)
-		screen.addch(y + i, x + n - 1, char, att)
+	for i in range(1, h - 1):
+		screen.addch(y + i, x, c, a)
+		screen.addch(y + i, x + w - 1, c, a)
+
+def draw_rectangle(screen, x, y, w, h, **kwarg):
+	'''draw a rectangle of given size
+
+	INPUT:
+	x, y = top left coordinate of the rectangle
+	w, h = width and heigth of the rectangle
+	[c, character] = character used to fill the rectangle
+	[a, attribute] = attribute used to fill the rectangle
+	'''
+
+	c = kwarg.pop('c', kwarg.pop('character', ' '))
+	a = kwarg.pop('c', kwarg.pop('attribute', curses.A_NORMAL))
+
+	for i in range(h):
+		screen.addstr(y + i, x, c*w, a)
 
 # miscellaneous functions
 def chratt(data):

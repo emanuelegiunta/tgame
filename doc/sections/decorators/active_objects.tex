@@ -2,7 +2,7 @@
 % !TeX spellcheck = en_GB
 
 \paragraph{Methods and variables}
-The decorator \code{@active\_objects} is the most essential. Its main goal is to equip the given class with basic methods that allows the instances to interact with the context \EG{ref} and perform basic actions such as activate, deactivate and destroy themselves. 
+The decorator \code{@active\_object} is the most essential. Its main goal is to equip the given class with basic methods that allows the instances to interact with the context \EG{ref} and perform basic actions such as activate, deactivate and destroy themselves. 
 Crucially, the \code{context} object assumes that all the instances he receives are at least decorated as active objects, for instance by checking if they are inactive before executing an event.\\
 Below a list of methods and variables added/modified by the decorator
 
@@ -20,9 +20,11 @@ Below a list of methods and variables added/modified by the decorator
 }
 
 
-\func{\_\_init\_\_}{context, *argv, screen \keyword{None}, **kwarg}{
-	Attach the given instance to \textit{context} and bind the screen. If the decorated class implements \code{\_\_init\_\_} this is executed with \textit{argv, kwarg}; otherwise these values are passed to \code{ev\_create} if implemented. If both \code{\_\_init\_\_} and \code{ev\_create} are defined, only the first method is invoked and a \code{RuntimeWarning} is raised.\\
-	\remark{observe that the new \code{\_\_init\_\_} has two extra argument with respect to the previous one/the creation event.}
+\func{\_\_init\_\_}{context, *argv, **kwarg}{
+	Attach the given instance to \textit{context}. 
+	If \textit{screen} a keyword argument in \textit{kwarg} then it set the instance view to \textit{screen}, otherwise the \textit{context} screen is uses.\\
+	If the decorated class implements \code{\_\_init\_\_} this is executed with \textit{argv, kwarg}; otherwise these values are passed to \code{ev\_create} if implemented. If both \code{\_\_init\_\_} and \code{ev\_create} are defined, only the first method is invoked and a \code{RuntimeWarning} is raised.\\
+	\remark{observe that the new \code{\_\_init\_\_} has one extra argument with respect to the previous one/the creation event.}
 }
 
 \func{activate}{ }{

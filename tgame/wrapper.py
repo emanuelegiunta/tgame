@@ -14,7 +14,7 @@ def _keycodes_get(screen):
 		else:
 			break
 
-	return keycode_vec
+	return tuple(keycode_vec)
 
 def wrapper(func = None):
 
@@ -41,14 +41,18 @@ def wrapper(func = None):
 		# Starts the main loop
 		while(True):
 
+			# Get the key pressed in the last step
+			keycodes = _keycodes_get(screen)
+
 			# Executes the events in order:
 			ctxt.ev_perform('ev_step_begin')
-			ctxt.ev_perform('ev_key', _keycodes_get(screen))
+			ctxt.ev_perform('ev_key', keycodes)
 			ctxt.ev_perform('ev_step')
 
 			ctxt.view_erase()
 			ctxt.background.draw()
 			ctxt.ev_perform('ev_draw')
+
 			ctxt.ev_perform('ev_step_end')
 
 			# End of step. Notice that sleep should be done in another thread

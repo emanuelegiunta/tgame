@@ -3,6 +3,7 @@ import curses
 from room import room
 from constants import CONTEXT_SPEED
 from background import background
+from utilities import screen_subwin
 
 class context(object):
 	def __init__(self, screen):
@@ -21,6 +22,7 @@ class context(object):
 		self._room = None
 		self._room_last_visited = None
  
+
 	# public variables
 	@property
 	def screen(self):
@@ -40,23 +42,30 @@ class context(object):
 	@background.setter
 	def background(self, bkg):
 		self._room.background = bkg
-		self.background = self._room.background
+		self._background = self._room.background
 	
+
 	# room methods
-	def room_add(self, name, *argv, **kwarg):
+	def room_new(self, name, *argv, **kwarg):
 		'''Add a new room and move into the new room
 		'''
 
-		assert (not self._room_dict.has_key(name)), "Room id already used"
-
 		# create and store the new room
 		new_room = room(self, *argv, **kwarg)
+		self.room_add(name, new_room)
+		return new_room
+ 	
+	def room_add(self, name, new_room):
+		'''Add a given room to the list of rooms, and move into it
+		'''
+		assert (not self._room_dict.has_key(name)), "Room id already used"
+
 		self._room_dict[name] = new_room
 		self._room_list.append(new_room)
 
 		# move into the new room
 		self._room_change(new_room, ev_perform = False)
- 
+
 	def room_goto(self, name, ev_perform = True):
 		assert (self._room_dict.has_key(name)), "Moving to non-existing room"
 
@@ -119,12 +128,14 @@ class context(object):
 		
 		# perform the room start event
 		if ev_perform:
-			self._room_start_ev()
+			self.ev_perform('ev_room_start')
+
 
 	# Instance methods
 	def instance_add(self, inst):
 		#
 		self._active_instances.append(inst)
+		self.layer_update()
 
 	def instance_remove(self, inst):
 		#
@@ -132,35 +143,40 @@ class context(object):
 	
 	def instance_of(self, *filters):
 
-		# stirng are interpreted as "the of inst's class is the given string"
-		for i in len(filters):
-			if type(filters[i]) == str:
-				filters[i] = lambda inst : \
-							     inst.__class__.__name__ == filters[i]
-
 		# concatenate all the filters in one function
 		def f(inst):
 			for g in filters:
-				if not g(inst):
-					return False
+				
+				# if g is a stirng, check the class name
+				if type(g) == str:
+					if inst.__class__.__name__ == g:
+						return True
+				
+				# else assume g is a function
+				else:
+					if g(inst):
+						return True
 
-			return True
+			return False
 
 		# filtering instance name
 		return filter(f, self._active_instances)
 
 	def instance_all(self, *but):
 
-		# stirng are interpreted as "the of inst's class is the given string"
-		for i in len(but):
-			if type(filters[i]) == str:
-				but[i] = lambda inst : inst.__class__.__name__ == but[i]
-
 		# concatenate all the filters in one function
 		def f(inst):
 			for g in but:
-				if g(inst):
-					return False
+
+				# if g is a string, check the class name
+				if type(g) == str:
+					if inst.__class__.__name__ == g:
+						return False
+
+				# else assume g is a function
+				else: 
+					if g(inst):
+						return False
 
 			return True
 
@@ -168,48 +184,87 @@ class context(object):
 		return filter(f, self._active_instances)
 
 
+	# layer method
+	def layer_update(self, all_rooms = False):
+		if not all_rooms:
+			self._active_instances.sort(key = lambda x : x.layer)
+		else:
+			# sort again all the list in all rooms
+			#  currently used by @active_object to support layer change
+			for other_room in self._room_list:
+				other_room.active_instances.sort(key = lambda x : x.layer)
+
+
 	# View method
+	def view_new(self, *argv, **kwarg):
+		'''Create a new view, store it, and return in
+		'''
+		
+		# get the parent screen from which we derive the new screen
+		screen = kwarg.pop('screen', self._screen)
+
+		# to see why we use screen_subwin instead of .subwin, chech the 
+		#  documentation of screen_subwin
+		new_view = screen_subwin(screen, *argv, **kwarg)
+		self.view_add(new_view)
+		return new_view
+
 	def view_add(self, view):
-		#
+		'''Add a given view
+		'''
+
 		self._views.append(view)
 
 	def view_remove(self, view):
-		#
+		'''Remove a given view
+		'''
 		self._views.remove(view)
 
 	def view_clear(self):
+		'''Clear all views and the main screen.
+
+		Note:
+		This function may flicker, but does not require to call a refresh
+		'''
+
 		self._screen.clear()
 		for view in self._views:
 			view.clear()
 
 	def view_erase(self):
+		'''Clear all views and the main screen.
+
+		Note:
+		This function is faster and more stable than view_clear. In most use
+		cases should be the preferred choice
+		'''
+
 		self._screen.erase()
 		for view in self._views:
 			view.erase()
 
 	def view_refresh(self):
-		# refresh the main view
+		'''Refresh all views and the main screen
+		'''
+
 		self._screen.refresh()
-		# refresh the views of the current room
 		for view in self._views:
 			view.refresh()
 
 
 	# background methods
-	def background_add(self, *argv, **kwarg):
+	def background_new(self, *argv, **kwarg):
+		'''Create a new background, store it, and return it
+		'''
 		self._room.background = background(self, *argv, **kwarg)
 		self._background = self._room.background
+
+		return self._room.background
 
 
 	# event methods
 	def ev_perform(self, name, *argv, **kwarg):
 		for inst in self._active_instances:
-			if inst.active:
-				
-				try:
-					f = getattr(inst, name)
-					f(*argv, **kwarg)
-				except AttributeError:
-					pass
-
-					
+			if inst.active and hasattr(inst, name):
+				f = getattr(inst, name)
+				f(*argv, **kwarg)
