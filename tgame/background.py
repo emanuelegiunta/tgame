@@ -18,8 +18,12 @@ def _background_from_file(filename, height, width):
 
 	# check that data is a rectangle of the right size by verifing that it has
 	# "height" rows each of lenght "width"
-	assert {len(row) for row in data} == {width}, "malformed background file"
-	assert len(data) == height, "malformed background file"
+	#
+	# REMARK - patched the unhelpful message returned if the screen is not of the right size. The function should be more flexible in general
+	assert {len(row) for row in data} == {width}, "malformed background file. screen width = {:d}, background width(s) = {}".format(
+			width, {len(row) for row in data}
+		)
+	assert len(data) == height, "malformed background file. screen heigth = {:d}, background heigth = {:d}".format(height, len(data))
 
 	# create the char dictionary
 	out = {}

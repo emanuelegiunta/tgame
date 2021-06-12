@@ -76,7 +76,7 @@ def extension_set(filename, extension):
 
 	Input:
 	filename: name of the input file
-	extension: the extension to set in filename
+	extension: the extension to set in filename (dot excluded)
 
 	Ouput:
 	the new filename of the form "prefix.extension"
