@@ -15,12 +15,15 @@ class context(object):
 		self._screen = screen
 		
 		# private variables
-		self._views = []
-		self._active_instances = []
-		self._room_dict = {}
-		self._room_list = []
-		self._room = None
-		self._room_last_visited = None
+		self._views = []				# list of current views
+		self._active_instances = []		# currently active instances
+		self._new_instances = []		# buffer of new instances
+		self._room_dict = {}			# 
+		self._room_list = []			#
+		self._room = None				# current room
+		self._room_next	= None			# next room after update
+		self._room_next_kwarg = None	# next room's optional parameters
+		self._room_last_visited = None	# last visited room (room_precedent)
  
 
 	# public variables
@@ -64,16 +67,18 @@ class context(object):
 		self._room_list.append(new_room)
 
 		# move into the new room
-		self._room_change(new_room, ev_perform = False)
+		#  e : no even on room change
+		#  f : force - perform che room change now
+		self._room_change(new_room, e = False, f = True)
 
-	def room_goto(self, name, ev_perform = True):
+	def room_goto(self, name, **kwarg):
 		assert (self._room_dict.has_key(name)), "Moving to non-existing room"
 
 		# retrieve the given room and move
 		next_room = self._room_dict[name]
-		self._room_change(next_room, ev_perform)
+		self._room_change(next_room, **kwarg)
 
-	def room_precedent(self, ev_perform = True):
+	def room_precedent(self, **kwarg):
 		'''Moves to the last visited room.
 
 		Input:
@@ -90,9 +95,9 @@ class context(object):
 			"There is no precedent room"
 
 		next_room = self._room_last_visited
-		self._room_change(next_room, ev_perform)
+		self._room_change(next_room, **kwarg)
 
-	def room_next(self, ev_perform = True):
+	def room_next(self, **kwarg):
 		# throw an error if there is no room at all
 		assert self._room is not None, "There is no room in the game"
 		
@@ -102,9 +107,9 @@ class context(object):
 		assert len(self._room_list) > (i + 1), "Reached last room"
 
 		next_room = self._room_list[(i + 1)]
-		self._room_change(next_room, ev_perform)
+		self._room_change(next_room, **kwarg)
 
-	def room_previous(self, ev_perform = True):
+	def room_previous(self, **kwarg):
 		# throw an error if there is no room at all
 		assert self._room is not None, "There is no room in the game"
 
@@ -114,32 +119,119 @@ class context(object):
 		assert i > 0, "Reached first room"
 
 		next_room = self._room_list[(i - 1)]
-		self._room_change(next_room, ev_perform)
+		self._room_change(next_room, **kwarg)
 
-	def _room_change(self, next_room, ev_perform):
-		self.view_clear()
-		self._room_last_visited = self._room
-		self._room = next_room
+	def room_update(self):
 
-		# change the list of active objects, views and background
-		self._active_instances = next_room.active_instances
-		self._views = next_room.views
-		self._background = next_room.background
-		
-		# perform the room start event
-		if ev_perform:
-			self.ev_perform('ev_room_start')
+		# checked frequently
+		if self._room_next is not None:
+
+			# get the paramerert and reset them immediately
+			next_room = self._room_next
+			kwarg = self._room_next_kwarg
+
+			self._room_next = None
+			self._room_next_kwarg = None
+
+			# accepted flags
+			#  p/peek : 		a function performed after ev_step_begin
+			#  e/ev_perform :	perform ev_room_start [after peek]
+
+			peek = kwarg.pop('p', kwarg.pop('peek', None))
+			ev_perform = kwarg.pop('e', kwarg.pop('ev_perform', True))
+
+			# change the list of active objects, views and background
+			self._active_instances = next_room.active_instances
+			self._new_instances = next_room.new_instances
+			self._views = next_room.views
+			self._background = next_room.background
+
+			# update the current room pointer
+			self._room_last_visited = self._room
+			self._room = next_room
+
+			# Extra Actions:
+			# 	perform the room start event
+			if ev_perform:
+				self.ev_perform('ev_room_start')
+
+			# 	perform the peek if not empty
+			if peek is not None:
+				peek()
+				
+
+	def _room_change(self, next_room, **kwarg):
+	
+		# Check that this is the first change
+		if self._room_next is None:
+
+			# extract flags:
+			#  f/force : peform the change now (by also calling a room update)
+
+			force = kwarg.pop('f', kwarg.pop('force', False))
+
+			# prepare data for the room change
+			self._room_next = next_room
+			self._room_next_kwarg = kwarg
+
+			# Extra Actions:
+			#  force the room change now
+			if force:
+				self.room_update()
+
+		# if in the same step I'm changing room two or more times, give up
+		else:
+			# DEBUG
+			s = ''
+			for key in self._room_dict.iterkeys():
+				if self._room_dict[key] == next_room:
+					s += "the other is {}\n".format(key)
+
+				if self._room_dict[key] == self._room_next:
+					s += "one is {}\n".format(key)
+			assert False, s
+
+			raise RuntimeError, "Two different room change in the same step."
 
 
 	# Instance methods
 	def instance_add(self, inst):
-		#
-		self._active_instances.append(inst)
-		self.layer_update()
+		''' add an instance to the set of instances whose events are performed
+
+		Note:
+		Lazy update - to avoid obscure bugs on creation of layered objects that
+		reorder the list during an event loop, new object are created at the
+		beginning of the next step (another reason is that it may result 
+		unexpected that an object performs ev_draw before ev_step_begin)
+		see instance_update
+		'''
+
+		self._new_instances.append(inst)
+
+	def instance_update(self):
+		''' turn to "concretelly active" new instance
+
+		Note: in practice elements from thw new_instances are moved to the list
+		of active instances
+		'''
+
+		if self._new_instances:
+			self._active_instances += self._new_instances
+			self.layer_update()
+
+			# empty the current _new_instances.. one way of doing it wrong is
+			#  calling self._new_instance = [], as we would now lose the 
+			#  connection with the room. Instead:
+
+			self._room.new_instances = []
+			self._new_instances = self._room.new_instances
 
 	def instance_remove(self, inst):
 		#
-		self._active_instances.remove(inst)
+		if inst not in self._new_instances:
+			self._active_instances.remove(inst)
+		else:
+			self._new_instances.remove(inst)
 	
 	def instance_of(self, *filters):
 
@@ -160,9 +252,18 @@ class context(object):
 			return False
 
 		# filtering instance name
-		return filter(f, self._active_instances)
+		if self._new_instances:
+			return filter(f, self._active_instances + self._new_instances)
+		else:
+			return filter(f, self._active_instances)
 
 	def instance_all(self, *but):
+		''' return all instance except those that satisfies at least one formula
+
+		Note:
+		@The Gray Area: according to TGA principle new object should not be active until the next step but they need to be visible as most instances
+		link with each other at creation time.
+		'''
 
 		# concatenate all the filters in one function
 		def f(inst):
@@ -181,11 +282,20 @@ class context(object):
 			return True
 
 		# filtering instance name
-		return filter(f, self._active_instances)
+		if self._new_instances:
+			return filter(f, self._active_instances + self._new_instances)
+		else:
+			return filter(f, self._active_instances)
 
 
 	# layer method
 	def layer_update(self, all_rooms = False):
+		''' order the list of active instance by depth
+		
+		Note:
+		This way object in lower layer are rendered before and appear "behind"
+		objects on higher layer.
+		'''
 		if not all_rooms:
 			self._active_instances.sort(key = lambda x : x.layer)
 		else:

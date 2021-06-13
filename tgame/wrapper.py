@@ -40,6 +40,10 @@ def wrapper(func = None):
 
 		# Starts the main loop
 		while(True):
+			# Update room/instance [changes there can only happen at specific
+			#  times]
+			ctxt.room_update()
+			ctxt.instance_update()
 
 			# Get the key pressed in the last step
 			keycodes = _keycodes_get(screen)

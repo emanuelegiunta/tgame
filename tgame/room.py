@@ -15,6 +15,7 @@ class room:
 
 		# public variables
 		self.active_instances = active_instances
+		self.new_instances = []
 		self.views = views
 		self.background = bkg
 		
