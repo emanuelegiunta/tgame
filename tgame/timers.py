@@ -3,10 +3,19 @@
 #  if not present
 class _timer_tdict(dict):
 	def __getitem__(self, key):
-		if self.has_key(key):
+		if key in self:
 			return dict.__getitem__(self, key)
 		else:
 			return -1
+
+	def __setitem__(self, key, value):
+		assert key in self.keys() or \
+			str(key) not in [str(k) for k in self.keys()], "Ambiguity! Setting different with same string representation: {:s}".format(key)
+
+		assert type(value) == int, "Timers can only be assiged integer values"
+		assert value >= 0, "Timers can only be assigned non negative values"
+
+		dict.__setitem__(self, key, value)
 
 
 # __init__
@@ -35,7 +44,7 @@ def _set_timer(cls):
 	
 	@timer.setter 
 	def timer(self, value):
-		raise ValueError, "Assignment to a protected variable"
+		raise ValueError("Assignment to a protected variable")
 
 	cls.timer = timer
 
@@ -52,14 +61,24 @@ def _set_ev_step_begin(cls):
 
 		# update all the currently active allarms
 		_recicle_bin = []
-		for (_key, _time) in self._timer.iteritems():
+		for (_key, _time) in self._timer.items():
 			if _time == 0:
 				_recicle_bin.append(_key)
 			else:
 				self._timer[_key] -= 1
 
 		for _key in _recicle_bin:
-			self._timer.pop(_key)
+
+			# raise the associated event
+			timer_event = "ev_timer_" + str(key)
+			if hasattr(inst, timer_event):
+				f = getattr(inst, timer_event)
+				f()
+
+			# if the timer was not resetted, remove
+			if self._timer[_key] == 0:
+				self._timer.pop(_key)
+
 
 		# execute the old event
 		if flg_ev_step_begin:

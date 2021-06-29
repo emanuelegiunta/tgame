@@ -1,0 +1,40 @@
+% !TeX root ../../tgame_doc
+% !TeX spellcheck = en_GB
+
+Before presenting the minimal Hello World program let's start with a simpler goal: starting a game that does nothing, which is arguably the most minimal program one could think of in this context. One way to do it is through the following code
+
+\begin{figure}[htb]
+\begin{snippet}
+import tgame as tg
+
+def init(ctxt):
+	ctxt.room_new("Dummy")
+	
+tg.wrapper(init)
+\end{snippet}
+\end{figure}
+
+The first line of the code is simply telling python to import the \code{tgame} module in our program. Next we define the function \code{init} which takes only one argument, a \code{context} object and create the first room called \textit{Dummy}. Finally we pass \code{init} to the wrapper which uses this function to initialise the game. When this script is executed the \textit{Dummy} room will be displayed, i.e.\ an empty room.
+In order to actually print a message we need to define an object whose purpose is to display it and then instantiating it in our room. This is done in the following.
+
+\begin{figure}[htb]
+\begin{snippet}
+import tgame as tg
+
+@tg.active_object
+class hello_world(object):
+	def ev_draw(self):
+		self.s.addstr(0, 0, "Hello World")
+
+def init(ctxt):
+	ctxt.room_new("Dummy")
+	
+	hello_world(ctxt)
+	
+tg.wrapper(init)
+\end{snippet}
+\end{figure}
+
+The first new thing to introduce is the \code{hello\_world} class, decorated with \code{@tg.active\_object}, which makes it an object that execute code when events are triggered and provide us with handler to manage it. One of this event is the \code{ev\_draw}, executed once per step, and to specify an action to perform we simply define the homonymous method. In this case we access the \code{curses.screen} that is stored in \code{self.s} by the decorator and then execute the \code{addstr} method to print a string "Hello World" on position $(0, 0)$.\\
+The second thing we add is the instantiation of this object in the \textit{Dummy} room. To do so we simply call the constructor passing the context as first argument.
+

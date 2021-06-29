@@ -1,7 +1,9 @@
 import curses
+import os
+
 from time import sleep
 
-from context import context
+from tgame.context import context
 
 def _keycodes_get(screen):
 	keycode_vec = []
@@ -19,6 +21,7 @@ def _keycodes_get(screen):
 def wrapper(func = None):
 
 	def _main(screen):
+
 		# Curses setting
 		curses.curs_set(False)
 		curses.use_default_colors()
@@ -40,10 +43,9 @@ def wrapper(func = None):
 
 		# Starts the main loop
 		while(True):
-			# Update room/instance [changes there can only happen at specific
-			#  times]
-			ctxt.room_update()
-			ctxt.instance_update()
+			# Perform scheduled tasks in the context object, usually things that
+			#  have to be changend outside the event in which they are called
+			ctxt.update()
 
 			# Get the key pressed in the last step
 			keycodes = _keycodes_get(screen)
@@ -62,6 +64,11 @@ def wrapper(func = None):
 			# End of step. Notice that sleep should be done in another thread
 			ctxt.view_refresh()
 			sleep(1.0/ctxt.speed)
-			
 
+
+	# OS Settings (required before initialising the screen)
+	os.environ.setdefault('ESCDELAY', '25')
+
+
+	# Start Curses
 	curses.wrapper(_main)

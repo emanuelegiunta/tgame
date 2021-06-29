@@ -42,18 +42,24 @@ def screen_subwin(screen, y, x, h, w):
 	# for easier debug check if the screen fit
 
 	try:	
-		return screen.subwin(h + 1, w, y, x)
+		return screen.derwin(h + 1, w, y, x)
 	except:
 		# guess what the cause of the error was
 		screen_h, screen_w = screen_size(screen)
 		if not x + w <= screen_w:
-			raise ValueError, "New view's width exceed parent view's width"
+			raise ValueError("New view's width exceed parent view's width")
 		elif not y + h <= screen_h:
-			raise ValueError, "New view's heigth exceed parent view's heigth"
+			raise ValueError("New view's heigth exceed parent view's heigth")
 
 		# if the guessing is not right, give up
 		else:
 			raise
+
+def screen_newwin(y, x, h, w):
+	try:
+		return curses.newwin(h + 1, w, y, x)
+	except:
+		raise
 
 
 # file functions

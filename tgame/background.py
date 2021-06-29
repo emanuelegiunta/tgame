@@ -1,7 +1,7 @@
 import curses
 
-from utilities import screen_size, extension_set, chratt
-from constants import BACKGROUND_EXT
+from tgame.utilities import screen_size, extension_set, chratt
+from tgame.constants import BACKGROUND_EXT
 
 # helper function
 def _background_from_file(filename, height, width):
@@ -51,10 +51,11 @@ def background_screenshot(context):
 
 	# return a background
 	return background(context, bkg = bkg)
+	
 
 # main class
 class background(object):
-	def __init__(self, context, bkg = None):
+	def __init__(self, context, bkg = None, empty_ch = None, empty_att = None):
 		# bkg can be formatted in several ways:
 		#
 		#  string -> interpreted as filename
@@ -77,6 +78,16 @@ class background(object):
 		elif hasattr(bkg, '__getitem__') and hasattr(bkg, '__setitem__'):
 			self._bkg = bkg
 
+		# bind empty_ch and empty_att
+		if empty_ch is None:
+			empty_ch = " "
+
+		if empty_att is None:
+			empty_att = curses.A_NORMAL
+
+		self.empty_ch = empty_ch
+		self.empty_att = empty_att
+
 	def ch_set(self, y, x, c, a = curses.A_NORMAL):
 		assert (y >= 0) and (self._h > y), "y coordinate out of boundaries"
 		assert (x >= 0) and (self._w > x), "x coordinate out of boundaries"
@@ -92,7 +103,7 @@ class background(object):
 		background
 		'''
 
-		for key, (bkg_c, bkg_a) in self._bkg.iteritems():
+		for key, (bkg_c, bkg_a) in self._bkg.items():
 			self._bkg[key] = (bkg_c, bkg_a | a)
 
 
@@ -100,7 +111,7 @@ class background(object):
 		assert (y >= 0) and (self._h > y), "y coordinate out of boundaries"
 		assert (x >= 0) and (self._w > x), "x coordinate out of boundaries"
 		# if y, x is not in the dictionary returns an empty character
-		return self._bkg.get((y, x), (" ", curses.A_NORMAL))
+		return self._bkg.get((y, x), (self.empty_ch, self.empty_att))
 
 	def ch_del(self, y, x):
 		assert (y >= 0) and (self._h > y), "y coordinate out of boundaries"
@@ -108,5 +119,5 @@ class background(object):
 		self._bkg.pop((y, x))
 
 	def draw(self):
-		for (y, x), (c, a) in self._bkg.iteritems():
+		for (y, x), (c, a) in self._bkg.items():
 			self._s.addch(y, x, c, a)

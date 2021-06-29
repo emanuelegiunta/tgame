@@ -22,6 +22,7 @@ MENU_KEY_RIGHT = curses.KEY_RIGHT
 MENU_KEY_ENTER = ord('\n')
 MENU_ATTRIBUTE_ON = curses.A_REVERSE
 MENU_ATTRIBUTE_OFF = curses.A_NORMAL
+MENU_ATTRIBUTE_WAIT = curses.A_DIM
 
 MENU_ACTION_PREFIXES = ['opt', 'Opt', 'option', 'Option', 'opt_', 'Opt_',\
 	                    'option_', 'Option_']

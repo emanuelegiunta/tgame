@@ -10,14 +10,18 @@
 
 \newcommand*{\code}[1]{\texttt{#1}}
 
-\newcommand{\func}[3]{
+\newcommand{\gfunc}[4]{
 	\noindent
-	\texttt{#1} (\textit{#2}):%
+	\texttt{#1}(\textit{#2}):\hfill#3%
 	\begin{adjustwidth}{0.75cm}{0cm}
-		\small #3
+		\small #4
 	\end{adjustwidth}
 	\medskip
 	}
+
+\newcommand{\func}[3]{\gfunc{#1}{#2}{}{#3}}
+
+\newcommand{\pfunc}[3]{\gfunc{#1}{#2}{Private Method}{#3}}
 	
 \newcommand{\vari}[3]{
 	\noindent
@@ -31,3 +35,20 @@
 \newcommand{\remark}[1]{\textbf{Remark}:\ #1}
 
 \newcommand{\keyword}[1]{= \textnormal{\code{#1}}}
+
+%==============================================================================%
+% Environments
+\definecolor{lightgray}{rgb}{0.83, 0.83, 0.83}
+
+\newsavebox{\FVerbBox}
+\newenvironment{snippet}{
+	\VerbatimEnvironment
+	\begin{center}
+	\begin{lrbox}{\FVerbBox}
+	\begin{BVerbatim}
+		}{
+	\end{BVerbatim}
+	\end{lrbox}
+	\colorbox{lightgray}{\usebox{\FVerbBox}}
+	\end{center}
+}

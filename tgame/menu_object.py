@@ -1,7 +1,7 @@
 import curses
 
-from active_object import active_object
-from constants import *
+from tgame.active_object import active_object
+from tgame.constants import *
 
 # __init__ helper
 def _assume_actions_match(suffix, string_list):
@@ -19,7 +19,7 @@ def _assume_actions_match(suffix, string_list):
 	# format the suffix to match possible methods
 	#  - spaces replaced with underscores
 	suffix = suffix.replace(' ', '_')
- 	found_something = False	# turn true after the firs entry is detected
+	found_something = False	# turn true after the firs entry is detected
 	out = None
 
 	for prefix in MENU_ACTION_PREFIXES:
@@ -161,6 +161,7 @@ def _set____init__(cls):
 		self.align = MENU_ALIGN
 		self.atton = MENU_ATTRIBUTE_ON
 		self.attoff = MENU_ATTRIBUTE_OFF
+		self.attwait = MENU_ATTRIBUTE_WAIT
 		#  control
 		self.key_up = MENU_KEY_UP
 		self.key_down = MENU_KEY_DOWN
@@ -170,6 +171,7 @@ def _set____init__(cls):
 		#  behaviour
 		self.options = None
 		self.actions = None
+		self.focus = True
 
 		# Internal variables
 		self._menu_optx = 0
@@ -180,13 +182,13 @@ def _set____init__(cls):
 
 		# self.options cannot be left empty
 		if self.options is None:
-			raise ValueError, "Menu object with unspecified options"
+			raise ValueError("Menu object with unspecified options")
 
 		# when self.actions is empty, we try to assume the role of each
 		#  entry in self.options
 		if self.actions is None:
 			if not _assume_actions(self):
-				raise ValueError, "Could not assume actions from instance methods and given options - please explicitly specify them using self.actions"
+				raise ValueError("Could not assume actions from instance methods and given options - please explicitly specify them using self.actions")
 
 		
 	# Overload the old __init__ function
@@ -203,13 +205,13 @@ def _set_hw(cls):
 			return sum(maxw) + (len(self.options) - 1)*self.xskip
 		except:
 			if self.options == None:
-				raise ValueError, "Computing menu width before passing menu's list of options"
+				raise ValueError("Computing menu width before passing menu's list of options")
 			else:
 				raise	
 
 	@w.setter
 	def w(self, value):
-		raise ValueError, "Assignment to a protected variable"
+		raise ValueError("Assignment to a protected variable")
 
 	@property
 	def h(self):
@@ -221,13 +223,13 @@ def _set_hw(cls):
 				*(self.yskip + 1) + 1
 		except:
 			if self.options == None:
-				raise ValueError, "Computing menu height before passing menu's list of options"
+				raise ValueError("Computing menu height before passing menu's list of options")
 			else:
 				raise
 
 	@h.setter
 	def h(self, value):
-		raise ValueError, "Assignment to a protected variable"
+		raise ValueError("Assignment to a protected variable")
 
 	cls.w = w
 	cls.h = h
@@ -269,18 +271,21 @@ def _set_ev_draw(cls):
 					# set the y-coordinate
 					_y = self.y + self.yoff + (1 + self.yskip)*_j
 
-					# choose the attribute
-					if _i == self._menu_optx and _j == self._menu_opty:
-						_att = self.atton
+					# choose the attribute (if focused)
+					if self.focus == True:
+						if _i == self._menu_optx and _j == self._menu_opty:
+							_att = self.atton
+						else:
+							_att = self.attoff
 					else:
-						_att = self.attoff
+						_att = self.attwait
 
 					# handle the allignment
 					if self.align == 'l':
 						_dx = 0
 
 					elif self.align == 'c':
-						_dx = (_maxw[_i] - len(_string))/2
+						_dx = (_maxw[_i] - len(_string))//2
 
 					elif self.align == 'r':
 						_dx = _maxw[_i] - len(_string)
@@ -310,7 +315,7 @@ def _set_ev_key(cls):
 	# define the new function
 	def new_ev_key(self, keycodes):
 		# noone wants an invisible menu to do anything
-		if self.visible:
+		if self.visible and self.focus:
 
 			# check for arrow key
 			if self.key_up in keycodes:

@@ -1,0 +1,11 @@
+% !TeX root ../../tgame_doc
+% !TeX spellcheck = en_GB
+
+Object decorated with the \code{@timer} are equipped with a set of timers starting from a given value down to zero, ticking at each step. This is usually needed to delay some action of alternate between two states, for instance a blinking object. Even though the same behaviour could be obtained with a counter decreasing by one each \code{ev\_step} or \code{ev\_step\_begin} this is the recommended way. More in details
+
+\medskip
+\vari{.timer}{Read Only}{
+	A dictionary-like object that accepts only assignment to non negative integer values. Once a \textit{key} is assigned to a value, through the standard dictionary syntax \code{.timer[key] = value}, each step \textit{value} is decreased by one. Once the \textit{value} reaches zero an event \code{ev\_timer\_\{key\}} is performed with \code{\{key\}} being the string representation of \textit{key}.\\
+	Getting \code{timer[key]} on a key that is not assigned to any value returns $-1$.\\
+	\remark{in debug mode several assert warn the user if ambiguous keys with the same string have been used, for instance \code{"0"} and \code{0}, as they perform the same timer event.}
+}

@@ -3,22 +3,35 @@
 
 \paragraph{Methods and variables}
 The decorator \code{@active\_object} is the most essential. Its main goal is to equip the given class with basic methods that allows the instances to interact with the context \EG{ref} and perform basic actions such as activate, deactivate and destroy themselves. 
-Crucially, the \code{context} object assumes that all the instances he receives are at least decorated as active objects, for instance by checking if they are inactive before executing an event.\\
-Below a list of methods and variables added/modified by the decorator
+Crucially, the \code{context} object assumes that all the instances he receives are at least decorated as active objects. This is essential for instance when checking whether they are inactive before executing an event.\\
+Below a list of methods and variables added/modified by the decorator is provided.
 
 \medskip
+\vari{.visible}{Read \& Write}{
+	Boolean value \code{True} by default. If \code{False} the draw event, see \code{ev\_draw} \EG{ref}, is not performed.\\
+	\remark{All the other events happen as usual and in particular an invisible active object is still able to draw on screen if drawing functions are called outside \code{ev\_draw}, for instance in \code{ev\_step\_end}}
+}
+
+\vari{.permanent}{Read \& Write}{
+	Boolean value \code{True} by default. If \code{True} the instance will only be preset the context's room at the moment of instantiation. Otherwise the instance will be carried in the next room while performing a room transition.
+}
+
+\vari{.layer}{Read \& Write}{
+	Integer value indicating the layer in which the current object is drawn.\\
+	Modifying this value will produce visible effects from the next step.
+}
+
 \vari{.active}{Read Only}{
-	Boolean values modified by the methods \code{activate} and \code{deactivate}. If \code{True} for a given instance in the current room, the context will call its event methods in the main loop.
+	Boolean value modified by the methods \code{activate} and \code{deactivate}. If \code{True} for a given instance in the current room, the context will call its event methods in the main loop.
 }
 
-\vari{.\_c}{Private, Read Only}{
-	Context object \EG{ref?}.
+\vari{.c}{Read Only}{
+	Associate context object \EG{ref?}.
 }
 
-\vari{.\_s}{Private, Read Only}{
-	Associated screen object.
+\vari{.s}{Read Only}{
+	Associated screen object. Setted at creation time through the flag \textit{s} or \textit{screen}, both accepting a \code{curses.window} object
 }
-
 
 \func{\_\_init\_\_}{context, *argv, **kwarg}{
 	Attach the given instance to \textit{context}. 
@@ -27,16 +40,14 @@ Below a list of methods and variables added/modified by the decorator
 	\remark{observe that the new \code{\_\_init\_\_} has one extra argument with respect to the previous one/the creation event.}
 }
 
-\func{activate}{ }{
-	Set \code{active} to \code{True}.
+\func{activate}{}{
+	Set \code{active} to \code{True} and activate the current instance.
 }
 
-\func{deactivate}{ }{
-	Set \code{active} to \code{False}.
+\func{deactivate}{}{
+	Set \code{active} to \code{False} and deactivate the current instance.
 }
 
-\func{destroy}{  }{
+\func{destroy}{}{
 	Destroy the object and perform the \code{ev\_destroy} event.
 }
-
-\paragraph{Examples} \EG{TODO}

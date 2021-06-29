@@ -1,13 +1,15 @@
 % !TeX root ../../tgame_doc
 % !TeX spellcheck = en_GB
 
+Generally speaking methods in the context class are always of the shape \textit{object}\_\text{action} where object is the kind of class the method acts on and the action describes the method purposes. Moreover in this section some of the methods are marked as private. This means that their use is not restricted to the context object but should remain only within the \code{tgame} package
+
 \paragraph{Room methods}
 The two main actions provided to manipulate rooms handled by the context object are creation and transition. 
 Creating a room is meant to happen before the main loop, even though the action can be called at any time, while transitions are supposed to happen frequently.
 Creation is handled with the two following methods
 
 \medskip
-\func{room\_create}{name, *argv}{
+\func{room\_new}{name, *argv}{
 	Create a new room and add it to the list with the arguments passed. \EG{ref to rooms} If name is already used returns an error
 }
 
@@ -42,24 +44,38 @@ On the other side, to perform transitions between rooms the following methods ar
 	Goes to the last room according to the creation order. If no room was created so far it will raise an error.
 }
 
+\pfunc{room\_update}{ }{
+	Perform the room transition requested through other methods. This should not be used in games since performing a room transition during the main loop may result in unexpected behaviour. If you must change room immediately use the keyword argument \code{f = True} in any transition function
+}
+
 \paragraph{Instance methods}
 Instance related method allows to manage active objects, adding/removing them and looping through them. The first category is only recommended for internal and low-level use.
 
 \medskip
-\func{instance\_add}{inst}{ 
-	Add \textit{inst} to the list of active objects. \remark{when creating a new object from a given class this is usually done by parent methods.}
+\pfunc{instance\_add}{inst}{ 
+	Add \textit{inst} lazily to the list of active objects. \remark{for active objects this is already performed at creation time.}
 }
 
-\func{instance\_remove}{inst}{
-	Remove \textit{inst} from the list of active objects. \remark{when destroying an object created from a given class, this action is usually performed by some parent method.}
+\pfunc{instance\_remove}{inst}{
+	Remove \textit{inst} from the list of active objects. \remark{for active objects it is recommended to use \code{self.destroy} instead.}
+}
+
+\pfunc{instance\_update}{ }{
+	Complete the creation process of new instances. \remark
 }
 
 \func{instance\_of}{*filters}{
-	Given a tuple of criteria \textit{filters}, return all instances satisfying at least one of them. Criteria can either be strings, interpreted as ``instance whose class name match the given string'' or boolean functions. \remark{notice that boolean functions are executed on all active instances. So looking for an instance with \code{inst.x = 1} will throw an error if there exists instances without this attribute}
+	Given a tuple of criteria \textit{filters}, return an iterator over all instances satisfying at least one of them. Criteria can either be strings, interpreted as ``instance whose class name match the given string'' or boolean functions. \remark{notice that boolean functions are executed on all active instances. So looking for an instance with \code{inst.x = 1} will throw an error if some of them don't have the \code{x} attribute}.
 }
 
 \func{instance\_all}{*but}{
-	Given a tuple of criteria \textit{*but} it returns all active instances that don't satisfy any of them. Criteria can either be strings, interpreted as ``instance whose class name match the given string'' or boolean functions. \remark{notice that boolean functions are executed on all active instances. So looking for an instance with \code{inst.x = 1} will throw an error if there exists instances without this attribute}.
+	Given a tuple of criteria \textit{*but} it returns all active instances that don't satisfy any of them. Criteria can either be strings, interpreted as ``instance whose class name match the given string'' or boolean functions. \remark{notice that boolean functions are executed on all active instances. So looking for an instance with \code{inst.x = 1} will throw an error if some of them don't have the \code{x} attribute}.
+}
+
+\paragraph{Layer methods}
+Currently only one private method is defined to manage layers, i.e. the order in which instances are rendered. The only relevant context in which this method should be called is when an instance is appended to the list of active instances, and this is already handled by the \code{active\_instance} decorator
+\pfunc{layer\_update}{}{
+	Update the rendering order of currently active instances
 }
 
 \paragraph{View methods}
@@ -68,8 +84,17 @@ Views in the current room are refreshed and displayed at each step \EG{exception
 The main context in which this methods are useful is during room creation and in the main loop to clear/refresh the screen.
 
 \medskip
+\func{view\_new}{y, x, h, w}{
+	Create and return a new view with top left corner in position $(x, y)$ with height \textit{h} and width \textit{w}.
+}
+
 \func{view\_add}{view}{
-	Add a \code{curses.screen} object to the current room.
+	Add a \code{curses.screen} object to the current room.\\
+	\remark{it is not necessary to add a view after creating it with \code{view\_new}, however it may be useful to store in a local variable a view added in a room and add it to the context in other rooms, so that the used view is the same}
+}
+
+\func{view\_remove}{view}{
+	Destroy the given view
 }
 
 \func{view\_clear}{ }{
@@ -80,19 +105,17 @@ The main context in which this methods are useful is during room creation and in
 	Clear all views in the current room. This is a soft reset as to display any change it is necessary to call \code{view\_refresh}
 }
 
-\func{view\_refresh}{ }{
+\pfunc{view\_refresh}{ }{
 	Refresh all views in the current room.
 }
 
 \paragraph{Background methods}
-For background, as currently there is only one of them per room, it directly accessible through the variable \code{.background}. Hence the only method needed is the one that creates a new background.
+For background, as currently there is only one of them per room, it is directly accessible through the variable \code{.background}. Hence the only method needed is the one that creates a new background.
 
 \medskip
 \func{background\_create}{*argv, **kwarg}{
 	Create a background object and set it as the active one on the current room. Arguments \textit{*argv}, \textit{**kwarg} are the same used in the constructor methods of a background object.
 }
-
-
 
 \paragraph{Event methods}
 To avoid repetitions there is only one generic method dealing with events, meant to be used in the main loop

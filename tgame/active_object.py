@@ -1,8 +1,10 @@
 import warnings
 
-from constants import BASE_LAYER
+from tgame.constants import BASE_LAYER
 
-# __init__
+#==============================================================================#
+# Magic Methods
+#  __init__
 def _set___init__(cls):
 
 	# remark that if cls is instatiated from object it always has a __init__
@@ -20,15 +22,16 @@ def _set___init__(cls):
 
 		# Read and Write variables
 		self.visible = True
+		self.permanent = False
 
 		# Read and Write through getters/setters variables
-		self._active = True
+		self._layer = layer
 
 		# Read Only variables
 		self._c = context
 		self._s = screen
-		self._layer = layer
-
+		self._active = True
+		
 
 		# add the instance to the list of active object
 		self._c.instance_add(self)
@@ -52,7 +55,9 @@ def _set___init__(cls):
 	cls.__init__ = new___init__
 
 
-# layer
+#==============================================================================#
+# Properties
+# 	layer
 def _set_layer(cls):
 	@property
 	def layer(self):
@@ -60,12 +65,12 @@ def _set_layer(cls):
 
 	@layer.setter
 	def layer(self, value):
-		self._layer = value
+		self._layer = value 
 		self._c.layer_update(all_rooms = True)
 
 	cls.layer = layer
 
-# active/activate/deactivate
+# 	active/activate/deactivate
 def _set_active(cls):
 	# define the getter
 	@property
@@ -74,8 +79,8 @@ def _set_active(cls):
 	
 	# define the setter
 	@active.setter
-	def active(self):
-		raise TypeError, "Assignment to a protected variable"
+	def active(self, value):
+		raise TypeError("Assignment to a protected variable")
 
 	cls.active = active
 
@@ -97,7 +102,33 @@ def _set_deactivate(cls):
 	# add the methods
 	cls.deactivate = new_deactivate
 
-# destroy
+#  c/s
+def _set_context(cls):
+	@property
+	def c(self):
+		return self._c 
+
+	@c.setter
+	def c(self, value):
+		raise TypeError("Assignment to a protected variable")
+
+	cls.c = c
+
+def _set_screen(cls):
+	@property
+	def s(self):
+		return self._s
+	
+	@s.setter
+	def s(self, value):
+		raise TypeError("Assignment to a protected variable")
+
+	cls.s = s
+
+
+#==============================================================================#
+# Events
+#  destroy
 def _set_destroy(cls):
 	# we don't check if cls implements destroy
 	#  as it is not meant to. Actions relative
@@ -114,7 +145,7 @@ def _set_destroy(cls):
 	cls.destroy = new_destroy
 
 
-# draw
+#  draw
 def _set_ev_draw(cls):
 	# only if cls already has a draw event
 	if hasattr(cls, 'ev_draw'):
@@ -129,7 +160,8 @@ def _set_ev_draw(cls):
 		cls.ev_draw = new_ev_draw
 
 
-# decorator
+#==============================================================================#
+# final decorator
 def active_object(cls):
 	# modify the __init__ method
 	_set___init__(cls)
@@ -142,6 +174,10 @@ def active_object(cls):
 	_set_activate(cls)
 	_set_deactivate(cls)
 
+	# context/screen
+	_set_context(cls)
+	_set_screen(cls)
+
 	# draw event
 	_set_ev_draw(cls)
 
@@ -150,3 +186,4 @@ def active_object(cls):
 
 	return cls
 	
+#==============================================================================#

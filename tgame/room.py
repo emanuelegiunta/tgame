@@ -1,4 +1,4 @@
-from background import background
+from tgame.background import background
 
 class room:
 	def __init__(self, context, active_instances = None, views = None, bkg = None):
@@ -18,5 +18,6 @@ class room:
 		self.new_instances = []
 		self.views = views
 		self.background = bkg
+		self.updates = []
 		
 		
